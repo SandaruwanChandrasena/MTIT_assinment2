@@ -77,7 +77,7 @@ hotel-booking-system/
 
 ### Step 1 — Clone the Repository
 ```bash
-git clone <your-repo-url>
+git clone [<your-repo-url>](https://github.com/SandaruwanChandrasena/MTIT_assinment2.git)
 cd hotel-booking-system
 ```
 
