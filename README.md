@@ -54,26 +54,27 @@ A microservices-based Hotel Booking System built with **Python FastAPI**, **SQLi
 ```
 MTIT_assinment2/
 ├── run_all.py                  # Start all backend services at once
-├── seed_data.py                # Populate all services with 50 dummy records each
+├── seed_data.py                # Populate all services with 10 records each (50 total)
 ├── README.md
 ├── .gitignore
 │
 ├── api-gateway/                # API Gateway (port 8000)
-│   ├── main.py                 # Routes requests to correct microservice
+│   ├── main.py                 # Dynamic catch-all routing to microservices
 │   └── requirements.txt
 │
 ├── hotel-service/              # Hotel Service (port 8001)
-│   ├── main.py                 # App entry + health check
-│   ├── routes.py               # API endpoints (CRUD + search/filter/pagination)
+│   ├── main.py                 # App entry + health check endpoint
+│   ├── routes.py               # HTTP layer — CRUD + search/filter/pagination
 │   ├── service.py              # Business logic layer
-│   ├── models.py               # Database table definition
-│   ├── schemas.py              # Request/response validation
-│   ├── database.py             # SQLite connection
+│   ├── models.py               # SQLAlchemy database model
+│   ├── schemas.py              # Pydantic request/response schemas
+│   ├── database.py             # SQLite connection setup
 │   └── requirements.txt
 │
-├── room-service/               # Room Service (port 8002) — validates hotel_id
+├── room-service/               # Room Service (port 8002)
 │   ├── main.py
-│   ├── routes.py               # Calls Hotel Service on room create
+│   ├── routes.py               # CRUD + filter/pagination, calls Hotel Service
+│   ├── service.py              # Business logic layer
 │   ├── models.py
 │   ├── schemas.py
 │   ├── database.py
@@ -81,23 +82,26 @@ MTIT_assinment2/
 │
 ├── guest-service/              # Guest Service (port 8003)
 │   ├── main.py
-│   ├── routes.py
+│   ├── routes.py               # CRUD + search/filter/pagination
+│   ├── service.py              # Business logic layer
 │   ├── models.py
 │   ├── schemas.py
 │   ├── database.py
 │   └── requirements.txt
 │
-├── booking-service/            # Booking Service (port 8004) — validates guest + room
+├── booking-service/            # Booking Service (port 8004)
 │   ├── main.py
-│   ├── routes.py               # Calls Guest & Room services, updates room availability
+│   ├── routes.py               # CRUD + filter/pagination, calls Guest & Room services
+│   ├── service.py              # Business logic + inter-service communication
 │   ├── models.py
 │   ├── schemas.py
 │   ├── database.py
 │   └── requirements.txt
 │
-├── payment-service/            # Payment Service (port 8005) — validates booking
+├── payment-service/            # Payment Service (port 8005)
 │   ├── main.py
-│   ├── routes.py               # Calls Booking Service on payment create
+│   ├── routes.py               # CRUD + filter/pagination, calls Booking Service
+│   ├── service.py              # Business logic + inter-service communication
 │   ├── models.py
 │   ├── schemas.py
 │   ├── database.py
@@ -109,15 +113,17 @@ MTIT_assinment2/
     ├── src/
     │   ├── main.jsx
     │   ├── App.jsx             # Router + page navigation
-    │   ├── api/api.js          # All API calls routed via API Gateway
+    │   ├── theme.js            # Centralized design system (colors, styles, badges)
+    │   ├── api/
+    │   │   └── api.js          # All API calls routed via API Gateway
     │   ├── components/
-    │   │   └── Navbar.jsx
+    │   │   └── Navbar.jsx      # Dark navy navbar with active tab indicator
     │   └── pages/
-    │       ├── HotelsPage.jsx  # Full CRUD + search + filter + pagination
-    │       ├── RoomsPage.jsx
-    │       ├── GuestsPage.jsx
-    │       ├── BookingsPage.jsx
-    │       └── PaymentsPage.jsx
+    │       ├── HotelsPage.jsx  # CRUD + search by name + filter by city/stars + pagination
+    │       ├── RoomsPage.jsx   # CRUD + filter by hotel/type/availability/price + pagination
+    │       ├── GuestsPage.jsx  # CRUD + search by name/email + filter by nationality + pagination
+    │       ├── BookingsPage.jsx # CRUD + filter by guest/room/status/date range + pagination
+    │       └── PaymentsPage.jsx # CRUD + filter by booking/status/method/amount + pagination
     └── ...
 ```
 
@@ -130,7 +136,7 @@ MTIT_assinment2/
                              │
                              ▼
                     API Gateway (port 8000)
-                    [Single Entry Point]
+                    [Single Entry Point — no multiple ports]
                              │
           ┌──────────────────┼──────────────────┐
           │                  │                  │
@@ -216,9 +222,9 @@ venv\Scripts\activate
 python run_all.py
 ```
 
-This starts all 5 microservices and the API Gateway simultaneously.
+This starts all 5 microservices and the API Gateway simultaneously on their respective ports.
 
-### Terminal 2 — Seed Dummy Data (one-time only)
+### Terminal 2 — Seed Demo Data (one-time only)
 
 ```bash
 # Mac/Linux
@@ -230,7 +236,15 @@ venv\Scripts\activate
 python seed_data.py
 ```
 
-Creates **250 records total** (50 per service), seeded in dependency order so all inter-service validations pass.
+Creates **50 records total** (10 per service) with real Sri Lankan hotel data, seeded in dependency order so all inter-service validations pass: Hotels → Rooms → Guests → Bookings → Payments.
+
+> To re-seed fresh data, delete the `.db` files first:
+> ```bash
+> # Windows
+> del hotel-service\hotels.db room-service\rooms.db guest-service\guests.db booking-service\bookings.db payment-service\payments.db
+> # Mac/Linux
+> rm hotel-service/hotels.db room-service/rooms.db guest-service/guests.db booking-service/bookings.db payment-service/payments.db
+> ```
 
 ### Terminal 3 — Start Frontend
 
@@ -255,38 +269,68 @@ Open **http://localhost:5173** in your browser.
 | Bookings | http://localhost:8000/bookings |
 | Payments | http://localhost:8000/payments |
 
-### Hotel Service — Advanced Endpoints
+### Hotel Service — Search, Filter & Pagination
 
 | Operation | Method | Endpoint | Notes |
 |---|---|---|---|
-| Get all hotels | GET | `/hotels` | Supports search, filter & pagination |
-| Search by name | GET | `/hotels?search=Hilton` | Case-insensitive |
+| Get all | GET | `/hotels` | Supports all filters below |
+| Search by name | GET | `/hotels?search=Hilton` | Case-insensitive partial match |
 | Filter by city | GET | `/hotels?city=Colombo` | Case-insensitive |
+| Filter by country | GET | `/hotels?country=Sri Lanka` | Case-insensitive |
 | Filter by stars | GET | `/hotels?stars=5` | Exact match (1–5) |
-| Min rating filter | GET | `/hotels?min_rating=4` | Greater than or equal |
+| Min rating | GET | `/hotels?min_rating=4` | Greater than or equal |
+| Active only | GET | `/hotels?is_active=true` | |
 | Pagination | GET | `/hotels?skip=0&limit=20` | Default: skip=0, limit=20 |
-| Get one hotel | GET | `/hotels/{id}` | |
-| Create hotel | POST | `/hotels` | |
-| Full update | PUT | `/hotels/{id}` | All fields required |
-| Partial update | PATCH | `/hotels/{id}` | Only changed fields needed |
-| Delete hotel | DELETE | `/hotels/{id}` | |
-| Health check | GET | `/health` | Returns service + DB status |
+| Get one | GET | `/hotels/{id}` | |
+| Create | POST | `/hotels` | |
+| Full update | PUT | `/hotels/{id}` | |
+| Partial update | PATCH | `/hotels/{id}` | Only send changed fields |
+| Delete | DELETE | `/hotels/{id}` | |
+| Health check | GET | `/health` | Service + DB status |
 
-### Other Services — Standard CRUD
+### Room Service — Filter & Pagination
 
-| Operation | Method | Endpoint |
-|---|---|---|
-| Get All | GET | `/{resource}` |
-| Get One | GET | `/{resource}/{id}` |
-| Create | POST | `/{resource}` |
-| Update | PUT | `/{resource}/{id}` |
-| Delete | DELETE | `/{resource}/{id}` |
+| Filter | Example |
+|---|---|
+| By hotel | `/rooms?hotel_id=1` |
+| By type | `/rooms?room_type=Suite` |
+| By availability | `/rooms?is_available=true` |
+| By price range | `/rooms?min_price=100&max_price=300` |
+| Pagination | `/rooms?skip=0&limit=20` |
+
+### Guest Service — Search & Filter
+
+| Filter | Example |
+|---|---|
+| Search name/email | `/guests?search=John` |
+| By nationality | `/guests?nationality=Sri Lankan` |
+| Pagination | `/guests?skip=0&limit=20` |
+
+### Booking Service — Filter & Pagination
+
+| Filter | Example |
+|---|---|
+| By guest | `/bookings?guest_id=1` |
+| By room | `/bookings?room_id=2` |
+| By status | `/bookings?status=confirmed` |
+| Date range | `/bookings?check_in_from=2026-04-01&check_in_to=2026-06-30` |
+| Pagination | `/bookings?skip=0&limit=20` |
+
+### Payment Service — Filter & Pagination
+
+| Filter | Example |
+|---|---|
+| By booking | `/payments?booking_id=1` |
+| By status | `/payments?status=paid` |
+| By method | `/payments?method=card` |
+| By amount range | `/payments?min_amount=100&max_amount=500` |
+| Pagination | `/payments?skip=0&limit=20` |
 
 ---
 
 ## 📄 Swagger UI (Interactive API Docs)
 
-Each FastAPI service auto-generates interactive documentation:
+Each FastAPI service auto-generates interactive API documentation:
 
 | Service | Direct Swagger URL | Via Gateway |
 |---|---|---|
@@ -301,7 +345,7 @@ Each FastAPI service auto-generates interactive documentation:
 
 ## 🗄️ Database
 
-Each service has its own **isolated SQLite database** (Database-per-Service pattern). No shared databases — services communicate only via HTTP.
+Each service has its own **isolated SQLite database** (Database-per-Service pattern). Services never share databases — they communicate only via HTTP.
 
 | Service | Database File |
 |---|---|
@@ -315,24 +359,46 @@ Each service has its own **isolated SQLite database** (Database-per-Service patt
 
 ---
 
+## 🎨 Frontend Theme System
+
+The frontend uses a centralized design system in `src/theme.js`. All colors, button styles, badges, table styles, and form styles are defined in one place and imported by every component.
+
+**To change the entire app theme**, only edit `src/theme.js`:
+
+```js
+// src/theme.js
+export const colors = {
+  primary:       "#2563eb",   // change this to switch the main color
+  primaryLight:  "#eff6ff",   // light background tint
+  primaryBorder: "#bfdbfe",   // border color
+  navBg:         "#0f172a",   // navbar background
+  // ...
+};
+```
+
+All 5 pages, the navbar, buttons, table headers, badges, and form labels update automatically.
+
+---
+
 ## ✅ Microservices Patterns Implemented
 
 | Pattern | Description |
 |---|---|
-| **API Gateway Pattern** | Single entry point (port 8000) routing to all services — avoids multiple ports |
+| **API Gateway Pattern** | Single entry point (port 8000) routing all requests — client never calls services directly |
 | **Database per Service** | Each service owns its own isolated SQLite database |
+| **Service Layer Pattern** | All services separate HTTP concerns (routes.py) from business logic (service.py) |
 | **Inter-Service Communication** | Services validate data across boundaries via HTTP using `httpx` |
-| **Service Layer Pattern** | Hotel Service separates HTTP concerns (routes.py) from business logic (service.py) |
-| **Health Check Endpoint** | `/health` endpoint on Hotel Service for service status monitoring |
-| **Input Validation** | Pydantic schemas with field-level constraints and descriptive error messages |
-| **Search, Filter & Pagination** | Advanced query support on Hotel Service with `skip`/`limit` pagination |
+| **Health Check Endpoint** | `/health` on Hotel Service returns service + DB status |
+| **Input Validation** | Pydantic schemas with field-level constraints on all services |
+| **Search, Filter & Pagination** | All 5 services support query parameters for filtering and pagination |
 | **Availability Management** | Room availability automatically updated when bookings are created or deleted |
+| **Centralized Theme System** | Frontend uses a single `theme.js` file for all design tokens |
 
 ---
 
 ## ⛔ Stopping Services
 
-Press `CTRL+C` in each terminal to stop the services.
+Press `CTRL+C` in each terminal window to stop all services.
 
 ---
 
@@ -342,4 +408,5 @@ Press `CTRL+C` in each terminal to stop the services.
 - The frontend communicates **exclusively through the API Gateway** (port 8000) — never directly to microservices
 - CORS is configured on the API Gateway to allow requests from the React frontend (port 5173)
 - SQLite `.db` files and `venv/` are excluded from Git via `.gitignore`
-- Seed data is created in dependency order: Hotels → Rooms → Guests → Bookings → Payments
+- The `service.py` layer exists in all 5 microservices for consistent architecture
+- Inter-service calls (booking validation, room availability updates) are handled inside `service.py`, not `routes.py`
