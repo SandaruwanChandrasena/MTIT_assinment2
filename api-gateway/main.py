@@ -2,6 +2,7 @@
 # Single entry point for all microservices
 
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import httpx
 
@@ -9,6 +10,19 @@ app = FastAPI(
     title="API Gateway",
     description="Gateway for Hotel Booking System - Routes requests to microservices",
     version="1.0.0"
+)
+
+# ─────────────────────────────────────────
+# CORS MIDDLEWARE
+# Allows the React frontend (port 5173) to call this API
+# Without this, the browser blocks cross-origin requests
+# ─────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─────────────────────────────────────────
@@ -98,6 +112,6 @@ async def root():
 async def service_root(service: str, request: Request):
     return await forward_request(request, service)
 
-@app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def service_with_path(service: str, path: str, request: Request):
     return await forward_request(request, service, path)
