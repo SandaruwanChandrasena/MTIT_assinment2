@@ -1,188 +1,284 @@
-# 🏨 Hotel Booking System — Microservices Architecture
+# Hotel Booking System — Microservices Architecture
 
-A microservices-based backend for a Hotel Booking System built with
-Python, FastAPI, and SQLite.
+A microservices-based Hotel Booking System with a React frontend, built with Python, FastAPI, SQLite, and React + Tailwind CSS.
 
 ---
 
-## 📋 Project Info
+## Project Info
 
 | Field        | Details                          |
 |-------------|----------------------------------|
 | Module       | IT4020 - Modern Topics in IT     |
 | Assignment   | Assignment 2                     |
 | Year         | Year 4 Semester 1/2 - 2026       |
-| Tech Stack   | Python, FastAPI, SQLite          |
 | Architecture | Microservices + API Gateway      |
 
 ---
 
-## 👥 Group Members & Contributions
+## Group Members & Contributions
 
-| Member   | Service          | Port |
-|----------|-----------------|------|
-| Member 1 | Hotel Service   | 8001 |
-| Member 2 | Room Service    | 8002 |
-| Member 3 | Guest Service   | 8003 |
-| Member 4 | Booking Service | 8004 |
-| Member 5 | Payment Service | 8005 |
-| All      | API Gateway     | 8000 |
+| Member   | Service          | Port | Branch          |
+|----------|-----------------|------|-----------------|
+| Member 1 | Hotel Service   | 8001 | Hotel-Service   |
+| Member 2 | Room Service    | 8002 | Room-Service    |
+| Member 3 | Guest Service   | 8003 | Guest-Service   |
+| Member 4 | Booking Service | 8004 | Booking-Service |
+| Member 5 | Payment Service | 8005 | Payment-Service |
+| All      | API Gateway     | 8000 | main            |
+| All      | React Frontend  | 5173 | main            |
 
 ---
 
-## 📁 Project Structure
+## Tech Stack
+
+| Technology   | Purpose                                    |
+|-------------|-------------------------------------------|
+| Python 3.11+ | Backend programming language              |
+| FastAPI      | Web framework for REST APIs               |
+| Uvicorn      | ASGI server to run FastAPI                |
+| SQLAlchemy   | ORM for database operations               |
+| SQLite       | Lightweight database (one per service)    |
+| httpx        | HTTP client for inter-service calls       |
+| Pydantic     | Data validation and request/response schemas |
+| React        | Frontend UI framework                     |
+| Tailwind CSS | Utility-first CSS styling                 |
+| Axios        | HTTP client for frontend API calls        |
+| Vite         | Frontend build tool and dev server        |
+
+---
+
+## Project Structure
+
 ```
-hotel-booking-system/
+MTIT_assinment2/
+├── run_all.py               # Start all backend services at once
+├── seed_data.py             # Populate all services with 50 dummy records each
+├── README.md
+├── .gitignore
 │
-├── venv/                    ← Virtual environment
-├── run_all.py               ← Run all services at once
-├── .gitignore               ← Git ignore file
-├── README.md                ← This file
-│
-├── api-gateway/
-│   ├── main.py              ← Gateway routing logic
+├── api-gateway/             # API Gateway (port 8000)
+│   ├── main.py              # Routes requests to correct microservice
 │   └── requirements.txt
 │
-├── hotel-service/
-│   ├── main.py              ← App entry point
-│   ├── routes.py            ← API endpoints
-│   ├── models.py            ← Database models
-│   ├── schemas.py           ← Request/Response schemas
-│   ├── database.py          ← SQLite connection
+├── hotel-service/           # Hotel Service (port 8001)
+│   ├── main.py              # App entry + health check
+│   ├── routes.py            # API endpoints (CRUD + search/filter/pagination)
+│   ├── service.py           # Business logic layer
+│   ├── models.py            # Database table definition
+│   ├── schemas.py           # Request/response validation
+│   ├── database.py          # SQLite connection
 │   └── requirements.txt
 │
-├── room-service/            ← Same structure
-├── guest-service/           ← Same structure
-├── booking-service/         ← Same structure
-└── payment-service/         ← Same structure
+├── room-service/            # Room Service (port 8002) — validates hotel_id
+│   ├── main.py
+│   ├── routes.py            # Calls Hotel Service on create
+│   ├── models.py
+│   ├── schemas.py
+│   ├── database.py
+│   └── requirements.txt
+│
+├── guest-service/           # Guest Service (port 8003)
+│   ├── main.py
+│   ├── routes.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── database.py
+│   └── requirements.txt
+│
+├── booking-service/         # Booking Service (port 8004) — validates guest + room
+│   ├── main.py
+│   ├── routes.py            # Calls Guest & Room services, updates room availability
+│   ├── models.py
+│   ├── schemas.py
+│   ├── database.py
+│   └── requirements.txt
+│
+├── payment-service/         # Payment Service (port 8005) — validates booking
+│   ├── main.py
+│   ├── routes.py            # Calls Booking Service on create
+│   ├── models.py
+│   ├── schemas.py
+│   ├── database.py
+│   └── requirements.txt
+│
+└── frontend/                # React Frontend (port 5173)
+    ├── package.json
+    ├── vite.config.js
+    ├── src/
+    │   ├── main.jsx
+    │   ├── App.jsx           # Router + page navigation
+    │   ├── api/api.js        # All API calls via gateway
+    │   ├── components/
+    │   │   └── Navbar.jsx
+    │   └── pages/
+    │       ├── HotelsPage.jsx    # Full CRUD + search + filter + pagination
+    │       ├── RoomsPage.jsx
+    │       ├── GuestsPage.jsx
+    │       ├── BookingsPage.jsx
+    │       └── PaymentsPage.jsx
+    └── ...
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Architecture Overview
 
-| Technology   | Purpose                        |
-|-------------|-------------------------------|
-| Python 3.11  | Programming language           |
-| FastAPI      | Web framework for building APIs|
-| Uvicorn      | ASGI server to run FastAPI     |
-| SQLAlchemy   | ORM for database operations    |
-| SQLite       | Lightweight database           |
-| httpx        | HTTP client for API Gateway    |
-| Pydantic     | Data validation and schemas    |
+```
+                    React Frontend (port 5173)
+                           │
+                           ▼
+                    API Gateway (port 8000)
+                           │
+          ┌────────────────┼────────────────────┐
+          │                │                    │
+          ▼                ▼                    ▼
+    Hotel Service    Room Service         Guest Service
+    (port 8001)      (port 8002)          (port 8003)
+    hotels.db        rooms.db             guests.db
+          ▲                ▲                    ▲
+          │                │                    │
+          │         Booking Service             │
+          │         (port 8004)─────────────────┘
+          │         bookings.db
+          │                ▲
+          │                │
+          │         Payment Service
+          │         (port 8005)
+          │         payments.db
+          │
+          └── Room Service calls Hotel Service (validate hotel_id)
+```
+
+### Inter-Service Communication
+
+| Service         | Calls              | Purpose                                      |
+|----------------|--------------------|--------------------------------------------- |
+| Room Service    | Hotel Service      | Verify hotel exists before creating a room    |
+| Booking Service | Guest Service      | Verify guest exists before creating a booking |
+| Booking Service | Room Service       | Verify room exists + is available             |
+| Booking Service | Room Service       | Mark room as unavailable after booking        |
+| Booking Service | Room Service       | Mark room as available after deleting booking |
+| Payment Service | Booking Service    | Verify booking exists before creating payment |
 
 ---
 
-## ⚙️ Setup Guide
+## Setup Guide
 
 ### Step 1 — Clone the Repository
+
 ```bash
 git clone https://github.com/SandaruwanChandrasena/MTIT_assinment2.git
-cd hotel-booking-system
+cd MTIT_assinment2
 ```
 
-### Step 2 — Create Virtual Environment
-```bash
-python -m venv venv
-```
+### Step 2 — Create & Activate Virtual Environment
 
-### Step 3 — Activate Virtual Environment
-
-Windows:
+**Mac/Linux:**
 ```bash
-venv\Scripts\activate
-```
-
-Mac/Linux:
-```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 4 — Install Dependencies
+**Windows:**
 ```bash
-python -m pip install fastapi uvicorn sqlalchemy httpx
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Step 3 — Install Backend Dependencies
+
+```bash
+pip install fastapi uvicorn sqlalchemy httpx requests
+```
+
+### Step 4 — Install Frontend Dependencies
+
+```bash
+cd frontend
+npm install
+cd ..
 ```
 
 ---
 
-## ▶️ Running the Services
+## Running the Application
 
-### Option 1 — Run ALL services at once (Recommended)
+### Start Backend (Terminal 1)
+
 ```bash
-python run_all.py
+source venv/bin/activate        # Mac/Linux
+# OR
+venv\Scripts\activate           # Windows
+
+python3 run_all.py              # Mac/Linux
+# OR
+python run_all.py               # Windows
 ```
 
-### Option 2 — Run each service separately
+### Seed Dummy Data (Terminal 2, one-time only)
 
-Open separate terminals for each service:
-
-**Terminal 1 — Hotel Service**
 ```bash
-cd hotel-service
-uvicorn main:app --reload --port 8001
+source venv/bin/activate        # Mac/Linux
+python3 seed_data.py            # Creates 50 records per service (250 total)
 ```
 
-**Terminal 2 — Room Service**
+### Start Frontend (Terminal 3)
+
 ```bash
-cd room-service
-uvicorn main:app --reload --port 8002
+cd frontend
+npm run dev
 ```
 
-**Terminal 3 — Guest Service**
-```bash
-cd guest-service
-uvicorn main:app --reload --port 8003
-```
-
-**Terminal 4 — Booking Service**
-```bash
-cd booking-service
-uvicorn main:app --reload --port 8004
-```
-
-**Terminal 5 — Payment Service**
-```bash
-cd payment-service
-uvicorn main:app --reload --port 8005
-```
-
-**Terminal 6 — API Gateway**
-```bash
-cd api-gateway
-uvicorn main:app --reload --port 8000
-```
+Then open http://localhost:5173 in your browser.
 
 ---
 
-## 🌐 API Endpoints
+## API Endpoints
 
-### Access Directly
+### Via API Gateway (Recommended)
 
-| Service         | URL                          |
-|----------------|------------------------------|
-| Hotel Service   | http://localhost:8001/hotels  |
-| Room Service    | http://localhost:8002/rooms   |
-| Guest Service   | http://localhost:8003/guests  |
-| Booking Service | http://localhost:8004/bookings|
-| Payment Service | http://localhost:8005/payments|
+| Service  | URL                           |
+|----------|-------------------------------|
+| Hotels   | http://localhost:8000/hotels   |
+| Rooms    | http://localhost:8000/rooms    |
+| Guests   | http://localhost:8000/guests   |
+| Bookings | http://localhost:8000/bookings |
+| Payments | http://localhost:8000/payments |
 
-### Access via API Gateway
+### Hotel Service — Advanced Endpoints
 
-| Service         | URL                           |
-|----------------|-------------------------------|
-| Hotels          | http://localhost:8000/hotels  |
-| Rooms           | http://localhost:8000/rooms   |
-| Guests          | http://localhost:8000/guests  |
-| Bookings        | http://localhost:8000/bookings|
-| Payments        | http://localhost:8000/payments|
+| Operation       | Method | Endpoint                | Notes                       |
+|----------------|--------|-------------------------|-----------------------------|
+| Get all hotels  | GET    | /hotels                 | Supports search/filter/pagination |
+| Search by name  | GET    | /hotels?search=Hilton   |                             |
+| Filter by city  | GET    | /hotels?city=Colombo    |                             |
+| Filter by stars | GET    | /hotels?stars=5         |                             |
+| Min rating      | GET    | /hotels?min_rating=4    |                             |
+| Pagination      | GET    | /hotels?skip=0&limit=20 |                             |
+| Get one hotel   | GET    | /hotels/{id}            |                             |
+| Create hotel    | POST   | /hotels                 |                             |
+| Full update     | PUT    | /hotels/{id}            | All fields required         |
+| Partial update  | PATCH  | /hotels/{id}            | Only changed fields needed  |
+| Delete hotel    | DELETE | /hotels/{id}            |                             |
+| Health check    | GET    | /health                 | Returns service + DB status |
+
+### Other Services — Standard CRUD
+
+| Operation | Method | Endpoint          |
+|-----------|--------|-------------------|
+| Get All   | GET    | /{resource}       |
+| Get One   | GET    | /{resource}/{id}  |
+| Create    | POST   | /{resource}       |
+| Update    | PUT    | /{resource}/{id}  |
+| Delete    | DELETE | /{resource}/{id}  |
 
 ---
 
-## 📄 Swagger UI (API Documentation)
+## Swagger UI (API Documentation)
 
-### Direct Swagger URLs
+Each service auto-generates interactive API docs:
 
-| Service         | Swagger URL                    |
+| Service         | Swagger URL                   |
 |----------------|-------------------------------|
 | Hotel Service   | http://localhost:8001/docs     |
 | Room Service    | http://localhost:8002/docs     |
@@ -193,94 +289,45 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 📊 CRUD Operations
+## Database
 
-Each service supports full CRUD:
+Each service has its own isolated SQLite database (Database per Service pattern):
 
-| Operation | Method | Endpoint          |
-|-----------|--------|-------------------|
-| Get All   | GET    | /hotels           |
-| Get One   | GET    | /hotels/{id}      |
-| Create    | POST   | /hotels           |
-| Update    | PUT    | /hotels/{id}      |
-| Delete    | DELETE | /hotels/{id}      |
+| Service         | Database File |
+|----------------|---------------|
+| Hotel Service   | hotels.db     |
+| Room Service    | rooms.db      |
+| Guest Service   | guests.db     |
+| Booking Service | bookings.db   |
+| Payment Service | payments.db   |
 
----
-
-## 🔄 Architecture Overview
-```
-Client / Browser
-       │
-       ▼
-API Gateway (port 8000)
-       │
-       ├──► Hotel Service   (8001) ──► hotels.db
-       ├──► Room Service    (8002) ──► rooms.db
-       ├──► Guest Service   (8003) ──► guests.db
-       ├──► Booking Service (8004) ──► bookings.db
-       └──► Payment Service (8005) ──► payments.db
-```
+Database files are created automatically on first run and excluded from Git.
 
 ---
 
-## 🗄️ Database
+## Key Microservices Patterns Implemented
 
-Each service has its own SQLite database file:
-
-| Service         | Database File  |
-|----------------|----------------|
-| Hotel Service   | hotels.db      |
-| Room Service    | rooms.db       |
-| Guest Service   | guests.db      |
-| Booking Service | bookings.db    |
-| Payment Service | payments.db    |
-
-Database files are created automatically when
-you run each service for the first time.
+- **API Gateway Pattern** — Single entry point routing to all services
+- **Database per Service** — Each service owns its own database
+- **Inter-Service Communication** — Services validate data across boundaries via HTTP
+- **Service Layer Pattern** — Separation of routes (HTTP) and business logic (Hotel Service)
+- **Health Check Endpoint** — Service status monitoring (Hotel Service)
+- **Input Validation** — Pydantic schemas with field-level constraints
+- **Search, Filter & Pagination** — Advanced query support (Hotel Service)
 
 ---
 
-## ⛔ Stopping Services
+## Stopping Services
 
-If running with run_all.py:
 ```bash
-Press CTRL+C
-```
-
-If running separately — press CTRL+C in each terminal.
-
----
-
-## 📝 Notes
-
-- Make sure all services are running before
-  testing via API Gateway
-- SQLite .db files are excluded from Git
-- Virtual environment folder is excluded from Git
+Press CTRL+C in each terminal
 ```
 
 ---
 
-## 📁 Final Root Level Structure
-```
-hotel-booking-system/
-│
-├── venv/               ← NOT in git
-├── .gitignore          ← ✅ NEW
-├── README.md           ← ✅ NEW
-├── run_all.py          ← ✅ Already done
-│
-├── api-gateway/
-├── hotel-service/
-├── room-service/
-├── guest-service/
-├── booking-service/
-└── payment-service/
-```
+## Notes
 
----
-
-## ✅ Create These Files at Root Level
-```
-☐ .gitignore     ← paste .gitignore code
-☐ README.md      ← paste README.md code
+- All services must be running for inter-service communication to work
+- SQLite .db files and venv/ are excluded from Git via .gitignore
+- Frontend communicates exclusively through the API Gateway (port 8000)
+- CORS is configured on the API Gateway to allow frontend requests
