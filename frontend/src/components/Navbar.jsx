@@ -49,7 +49,7 @@ export default function Navbar() {
       <div className="py-4">
         <span className="text-xs px-2.5 py-1 rounded-full font-medium"
           style={{ background: colors.navBadgeBg, color: colors.navBadgeText }}>
-          IT4020 — SLIIT
+          SLIIT
         </span>
       </div>
     </nav>
