@@ -258,6 +258,84 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
+## 🔧 Running Services Individually
+
+Instead of using `run_all.py`, you can start each service separately in its own terminal. This is useful for debugging a specific service or when you only need to run one or two services.
+
+> Make sure your virtual environment is activated in each terminal before running.
+
+### API Gateway — Port 8000
+
+```bash
+# Mac/Linux
+cd api-gateway
+uvicorn main:app --reload --port 8000
+
+# Windows
+cd api-gateway
+uvicorn main:app --reload --port 8000
+```
+
+### Hotel Service — Port 8001
+
+```bash
+cd hotel-service
+uvicorn main:app --reload --port 8001
+```
+
+### Room Service — Port 8002
+
+```bash
+cd room-service
+uvicorn main:app --reload --port 8002
+```
+
+### Guest Service — Port 8003
+
+```bash
+cd guest-service
+uvicorn main:app --reload --port 8003
+```
+
+### Booking Service — Port 8004
+
+```bash
+cd booking-service
+uvicorn main:app --reload --port 8004
+```
+
+### Payment Service — Port 8005
+
+```bash
+cd payment-service
+uvicorn main:app --reload --port 8005
+```
+
+### Frontend — Port 5173
+
+```bash
+cd frontend
+npm run dev
+```
+
+> **Important:** Services must be started in the correct order when running individually, because some services depend on others:
+>
+> ```
+> Hotel Service (8001)  ←  must start first
+>        ↓
+> Room Service (8002)   ←  calls Hotel Service
+>        ↓
+> Guest Service (8003)  ←  independent, any order
+>        ↓
+> Booking Service (8004) ← calls Guest + Room services
+>        ↓
+> Payment Service (8005) ← calls Booking Service
+>        ↓
+> API Gateway (8000)    ←  start last
+> ```
+
+---
+
 ## 🌐 API Endpoints
 
 ### Via API Gateway (port 8000) — Recommended
