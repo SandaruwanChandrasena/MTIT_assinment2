@@ -10,6 +10,7 @@ A microservices-based Hotel Booking System built with **Python FastAPI**, **SQLi
 |---|---|
 | Module | IT4020 - Modern Topics in IT |
 | Assignment | Assignment 2 |
+| Group ID | 71 |
 | Year | Year 4 Semester 1/2 — 2026 |
 | Institution | Sri Lanka Institute of Information Technology (SLIIT) |
 | Architecture | Microservices + API Gateway |
@@ -19,15 +20,15 @@ A microservices-based Hotel Booking System built with **Python FastAPI**, **SQLi
 
 ## 👥 Group Members & Contributions
 
-| Member | Service | Port | Branch |
-|---|---|---|---|
-| Member 1 | Hotel Service | 8001 | Hotel-Service |
-| Member 2 | Room Service | 8002 | Room-Service |
-| Member 3 | Guest Service | 8003 | Guest-Service |
-| Member 4 | Booking Service | 8004 | Booking-Service |
-| Member 5 | Payment Service | 8005 | Payment-Service |
-| All | API Gateway | 8000 | main |
-| All | React Frontend | 5173 | main |
+**Group ID: 71**
+
+| # | Name | Student ID | Service | Port |
+|---|---|---|---|---|
+| 1 | Dinethri M.R.A.T. | IT22067074 | Room Service | 8002 |
+| 2 | Nagahawatta H.D. | IT21436680 | Booking Service | 8004 |
+| 3 | Chandrasena Y.P.S. | IT22028600 | Payment Service, API Gateway, React Frontend | 8005, 8000, 5173 |
+| 4 | Ahamed M.S.A. | IT20012892 | Hotel Service, API Gateway, React Frontend | 8001, 8000, 5173 |
+| 5 | Denuwan P.M.K. | IT22229434 | Guest Service | 8003 |
 
 ---
 
